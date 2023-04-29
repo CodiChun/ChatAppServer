@@ -23,6 +23,7 @@ app.use(express.json());
 app.use(middleware.jsonErrorInBody);
 
 app.use('/hello', require('./routes/hello.js'))
+app.use('/params', require('./routes/params.js'));
 /*
  * Return HTML for the / end point.
  * This is a nice location to document your web service API
