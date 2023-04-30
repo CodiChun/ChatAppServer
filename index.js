@@ -25,6 +25,7 @@ app.use(middleware.jsonErrorInBody);
 app.use('/hello', require('./routes/hello.js'))
 app.use('/params', require('./routes/params.js'));
 app.use('/demosql', require('./routes/demosql.js'));
+app.use('/auth', require('./routes/register.js'));
 /*
  * Return HTML for the / end point.
  * This is a nice location to document your web service API
