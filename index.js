@@ -27,6 +27,11 @@ app.use('/params', require('./routes/params.js'));
 app.use('/demosql', require('./routes/demosql.js'));
 app.use('/auth', require('./routes/register.js'));
 app.use('/auth', require('./routes/signin.js'));
+app.use('/messages', middleware.checkToken, require('./routes/messages.js'));
+app.use('/chats', middleware.checkToken, require('./routes/chats.js'));
+app.use('/auth', middleware.checkToken, require('./routes/pushyregister.js'));
+app.use('/chatroom', middleware.checkToken, require('./routes/chatroom.js'));
+app.use('/member', middleware.checkToken, require('./routes/member.js'));
 /*
  * Return HTML for the / end point.
  * This is a nice location to document your web service API
