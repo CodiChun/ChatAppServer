@@ -21,8 +21,18 @@ app.use(express.json());
  * request parameters.
  */
 app.use(middleware.jsonErrorInBody);
+// app.get('/hello', (request, response) => {
+//   response.send({
+//     message: 'Hello, you sent a GET request',
+//   });
+// });
 
-app.use('/hello', require('./routes/hello.js'))
+// app.post('/hello', (request, response) => {
+//   response.send({
+//     message: 'Hello, you sent a POST request',
+//   });
+// });
+app.use('/hello', require('./routes/hello.js'));
 app.use('/params', require('./routes/params.js'));
 app.use('/demosql', require('./routes/demosql.js'));
 app.use('/auth', require('./routes/register.js'));
