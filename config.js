@@ -20,5 +20,5 @@ module.exports = {
           },
         },
         JSON_WEB_TOKEN: process.env.JSON_WEB_TOKEN || undefined,
-        PUSHY_API_KEY: process.env.PUSHY_API_KEY || undefined
+        PUSHY_API_KEY: process.env.PUSHY_API_KEY2 || undefined
 };
