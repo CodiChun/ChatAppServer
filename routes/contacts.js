@@ -270,3 +270,4 @@ router.get('/request', function(req, res) {
            })
 })
 
+module.exports = router
