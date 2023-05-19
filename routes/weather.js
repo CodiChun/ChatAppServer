@@ -40,4 +40,9 @@ router.get("/", (request, response, next) => {
     .then(data => response.status(200).send(data))
     .catch(reason => response.status(400).send(reason.message));
 });
+
+
 module.exports = router
+
+
+
