@@ -46,7 +46,7 @@ const router = express.Router()
 router.get('/list', function(req, res, next){
     const memberid_a = req.headers.memberid_a;
     if (memberid_a.length < 1) {
-        res.status(400).send('🚫Bad request!') 
+        res.status(400).send('Bad request!') 
     }
     
     const theQuery = 'SELECT memberid,username,firstname,lastname,contacts.verified FROM contacts INNER JOIN Members ON contacts.memberid_b = members.memberid WHERE memberid_a=$1 AND verified=$2'
@@ -78,7 +78,7 @@ router.get('/list', function(req, res, next){
                 
             })
             .catch((error) => {
-                console.log("contacts geting error")
+                console.log("contacts getting error")
                 console.log(error)
             })
 
@@ -213,62 +213,4 @@ router.post('/request', function(req, res, next) {
 
 })
 
-/**
- * @api {get} contacts/request get friend request
- * @apiName getRequest
- * @apiGroup Contacts
- * 
- * @apiHeader {String} authorization Valid JSON Web Token JWT
- * @apiParam {String} memberid_a memberid of user
- * @apiParam {String} memberid_b memberid of another user
- * 
- * @apiError (404: Request not found) {String} message "Request not found"
- * 
- * @apiSuccess (200: Success) {JSON} memberid_a memberid of user, memberid_b memberid of friend, verified
- * 
- * @apiSuccessExample {json} Success-Response:
- *  HTTP/1.1 200 OK
- * {
- *  "memberid_a": 1,
- *  "memberid_b": 2,
- *  "verified": 0
- * }
- * 
- * 
- * @apiUse JSONError
- */ 
-
-router.get('/request', function(req, res) {
-    //get user info by email
-    const memberid_b = req.headers.memberid_b;
-    const memberid_a = req.decoded.memberid;
-
-   //check if request exists in db already
-   theQuery = 'SELECT memberid_a, memberid_b, verified FROM CONTACTS WHERE memberid_a = $1 AND memberid_b = $2'
-   const values = [memberid_a, memberid_b]
-
-   pool.query(theQuery, values)
-           .then(result => { 
-               if (result.rowCount == 0) {
-                    res.status(404).send({
-                        success: false,
-                        message: 'Request not found'
-                    })
-                    return
-               } else {
-                res.status(200).send({
-                    success: true,
-                    memberid_a: result.rows[0].memberid_a,
-                    memberid_b: result.rows[0].memberid_b,
-                    verified: result.rows[0].verified
-                })
-               }   
-               
-           })
-           .catch((error) => {
-               console.log("request lookup error")
-               console.log(error)
-           })
-})
-
-
+module.exports = router
