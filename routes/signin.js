@@ -50,6 +50,7 @@ const key = {
 router.get(
   "/",
   (request, response, next) => {
+    console.log("in?")
     if (
       isStringProvided(request.headers.authorization) &&
       request.headers.authorization.startsWith("Basic ")
@@ -82,10 +83,12 @@ router.get(
     }
   },
   (request, response) => {
+    console.log("into query")
     const theQuery = `SELECT saltedhash, salt, Credentials.memberid FROM Credentials
                       INNER JOIN Members ON
                       Credentials.memberid=Members.memberid 
                       WHERE Members.email=$1`;
+    console.log("did it get there")
     const values = [request.auth.email];
     pool
       .query(theQuery, values)
@@ -96,6 +99,7 @@ router.get(
           });
           return;
         }
+        console.log("yes?")
 
         //Retrieve the salt used to create the salted-hash provided from the DB
         let salt = result.rows[0].salt;
@@ -108,6 +112,7 @@ router.get(
 
         //Did our salted hash match their salted hash?
         if (storedSaltedHash === providedSaltedHash) {
+          console.log("cred match")
           //credentials match. get a new JWT
           let token = jwt.sign(
             {
@@ -126,6 +131,7 @@ router.get(
             token: token,
           });
         } else {
+          console.log("cred mismatch")
           //credentials dod not match
           response.status(400).send({
             message: "Credentials did not match",
@@ -133,7 +139,7 @@ router.get(
         }
       })
       .catch((err) => {
-        //log the error
+        console.log(err)
         response.status(400).send({
           message: err.detail,
         });
