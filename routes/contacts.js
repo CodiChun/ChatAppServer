@@ -81,7 +81,6 @@ router.get('/list', function(req, res, next){
                 console.log("contacts getting error")
                 console.log(error)
             })
-
   }, (req, res) => {
     const theQuery = 'SELECT memberid,username,firstname,lastname,contacts.verified FROM contacts INNER JOIN Members ON contacts.memberid_b = members.memberid WHERE memberid_a=$1 AND verified=$2'
     const values = [req.memberid,0]
@@ -156,7 +155,6 @@ router.post('/request', function(req, res, next) {
                 console.log(error)
             })
 }, (req,res,next) =>{
-
     //check if request exists in db already
     theQuery = 'SELECT memberid_a, memberid_b, verified FROM CONTACTS WHERE memberid_a = $1 AND memberid_b = $2'
     const values = [req.memberid_a, req.memberid_b]
