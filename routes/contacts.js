@@ -129,7 +129,7 @@ router.post('/request', middleware.checkToken,
                     next()
                 }
             })
-    },(request, response, next) => {
+    },(request, response) => {
         // insert new unverified friend
         let query =
             `INSERT into Contacts (PrimaryKey, MemberID_A, MemberID_B, Verified) VALUES (DEFAULT, $1, $2, 0)
@@ -145,7 +145,7 @@ router.post('/request', middleware.checkToken,
                 } else {
                     response.memberid_b = result.rows[0].memberid_b;
                     response.verify = result.rows[0].verified;
-                    next()
+                    //next()
                 }
             })
             .catch((err) => {
@@ -154,55 +154,8 @@ router.post('/request', middleware.checkToken,
                     message: 'SQL Error: Insert failed',
                 });
             });
-    }, (request, response) => {
-    // Send a notification of this chat addition to ALL members with registered tokens
-    let query = `SELECT DISTINCT token FROM Push_Token
-                INNER JOIN Contacts ON
-                Push_Token.memberid = Contacts.memberid_b
-                WHERE Contacts.memberid_b=$1`
-    let values = [request.body.memberid]
-
-    pool.query(query, values)
-        .then((result) => {
-            if (result.rowCount==0) {
-                response.status(200).send({
-                    message: "No push token found, notification failed."
-                })
-            } else {
-                msg_functions.friendRequest(
-                    result.rows[0].token,
-                    request.decoded.memberid,
-                    response.nickname,
-                    response.firstname,
-                    response.lastname,
-                    response.email,
-                    response.verify
-                )
-                /*
-                result.rows.forEach((entry) =>
-                    msg_functions.friendRequest(
-                        entry.token,
-                        response.memberid_b,
-                        response.nickname,
-                        response.firstname,
-                        response.lastname,
-                        response.email,
-                        response.verify
-                        )
-                );
-                */
-                response.status(200).send({
-                    message: "Pushy requests sent",
-                    success:true
-                });
-            }
-        }).catch((err) => {
-            response.status(400).send({
-                message: 'SQL Error on select from push token',
-                error: err
-            });
-        });
     }
+    
 );
 
 
