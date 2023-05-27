@@ -37,6 +37,7 @@ let isStringProvided = validation.isStringProvided
  * @apiError (400: SQL Error) {String} message the reported SQL error details
  * 
  * @apiError (400: Unknown Chat ID) {String} message "invalid chat id"
+ * @apiError (403: Unknown Member ID) {String} message "invalid Member id"
  * 
  * @apiUse JSONError
  */ 
@@ -83,7 +84,7 @@ router.post("/", (request, response, next) => {
                     if (result.rowCount > 0) {
                         next()
                     } else {
-                        response.status(400).send({
+                        response.status(403).send({
                             message: "user not in chat"
                         })
                     }
