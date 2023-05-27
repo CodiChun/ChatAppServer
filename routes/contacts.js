@@ -7,8 +7,17 @@
 const { response } = require('express')
 const express = require('express')
 const { request } = require('express')
+const { CLIENT_MULTI_RESULT } = require('mysql/lib/protocol/constants/client.js')
+
 const pool = require('../utilities').pool
+
 const validation = require('../utilities').validation
+let isStringProvided = validation.isStringProvided
+const message_func = require('../utilities').messaging
+
+const middleware = require('../middleware')
+const jwt = require('../middleware/jwt')
+
 
 const url = require('url');
 const querystring = require('querystring');
@@ -18,197 +27,183 @@ const router = express.Router()
 
 
 /**
- * @api {get} /list Request to list contacts
+ * @api {get} /list of contacts both existing and pending
  * @apiName getList
  * @apiGroup Contacts
  * 
- * @apiHeader {String} authorization Valid JSON Web Token JWT
  * @apiParam {Number} memberid_a memberid of user
  * 
  * @apiSuccess (200: Success) {JSON} contacts json array
  * 
- *  @apiSuccessExample {json} Success-Response:
- *    HTTP/1.1 200 OK
- *   {
- *     "contacts": [],
- *     "incoming_requests": [],
- *     "outgoing_requests": []
- *    }
- * 
- * @apiError (400: Bad Request) {String} message "🚫Bad request!"
- * 
  * @apiError (404: Missing Parameters) {String} message "Contacts not found"
- * 
  * @apiError (400: SQL Error) {String} message contacts getting error
- * 
- * @apiUse JSONError
  */ 
-router.get('/list', function(req, res, next){
-    const memberid_a = req.headers.memberid_a;
-    if (memberid_a.length < 1) {
-        res.status(400).send('Bad request!') 
+router.get('/list',
+    (request, response, next) => {
+        //if no memberid is provided send an error
+        if (request.params.memberid === null) {
+            response.status(400).send({message: 'No memberid present',});
+        } else {
+            next();
+        }
+    },
+    (request, response, next) => {
+        //make sure the memberid provided exists in the database
+        let query = `SELECT * FROM Credentials WHERE MemberID=$1`;
+        let values = [request.params.memberid];
+
+        pool.query(query, values)
+            .then((result) => {
+                next();
+            })
+            .catch((error) => {
+                response.status(400).send({
+                    message: 'SQL Error',
+                    error: error,
+                });
+            });
+    },
+    (request, response) => {
+        // perform the Select*
+        let query = `SELECT Members.MemberId as id, Members.FirstName AS FirstName, Members.LastName AS LastName, Members.Nickname AS Nickname, Members.Email AS Email
+                        FROM Contacts LEFT JOIN Members ON Members.MemberID = Contacts.MemberID_A
+                        WHERE MemberID_B=$1 AND Contacts.verified = $2
+                        ORDER BY LastName ASC`;
+        let values = [request.params.memberid, request.params.verified];
+
+        pool.query(query, values)
+            .then((result) => {
+                response.send({
+                    userId: request.params.memberid,
+                    rowCount: result.rowCount,
+                    rows: result.rows,
+                });
+            })
+            .catch((err) => {
+                response.status(400).send({
+                    message: 'SQL Error',
+                    error: err,
+                });
+            });
     }
-    
-    const theQuery = 'SELECT memberid,username,firstname,lastname,contacts.verified FROM contacts INNER JOIN Members ON contacts.memberid_b = members.memberid WHERE memberid_a=$1 AND verified=$2'
-    const values = [memberid_a,1]
+);
 
-    pool.query(theQuery, values)
-            .then(result => { 
-                
-                    const contacts = JSON.stringify(Object.assign({}, result.rows))
-                    req.contacts = contacts
-                    req.memberid = memberid_a
+router.post('/request', middleware.checkToken,
+    (request, response, next) => {
+        let query = 'SELECT * FROM Contacts WHERE MemberID_A=$1';
+        let values = [request.decoded.memberid];
+        console.log(request.decoded.memberid)
+        pool.query(query, values)
+            .then((result) => {
+                if (result.rowCount == 0) {
+                    response.status(400).send({
+                        message: 'memberid not found!',
+                    });
+                } else {
+                    response.firstname = result.rows[0].firstname;
+                    response.lastname = result.rows[0].lastname;
+                    response.nickname = result.rows[0].nickname;
+                    response.email = result.rows[0].email;
+                    next();
+                }
+            })
+            .catch((err) => {
+                console.log('error finding user: ' + err);
+                response.status(400).send({
+                    message: 'SQL error',
+                });
+            });
+    }, (request, response, next) => {
+        // verify that friend does not already exist!
+        let query = `SELECT MemberID_B FROM Contacts WHERE (MemberID_A=$1 AND MemberID_B=$2)
+                    OR (MemberID_B=$1 AND MemberID_A=$2)`
+        let values = [request.decoded.memberid, request.body.memberid];
+
+        pool.query(query, values)
+            .then((result) => {
+                if (result.rowCount!=0) {
+                    response.status(200).send({
+                        message: 'pending friend request already exists.'
+                    })
+                } else {
                     next()
-                 
+                }
             })
-            .catch((error) => {
-                console.log("contacts geting error")
-                console.log(error)
-            })
-  }, (req, res, next) => {
-    const theQuery = 'SELECT memberid,username,firstname,lastname,contacts.verified FROM contacts INNER JOIN Members ON contacts.memberid_a = members.memberid WHERE memberid_b=$1 AND verified=$2'
-    const values = [req.memberid,0]
+    },(request, response, next) => {
+        // insert new unverified friend
+        let query =
+            `INSERT into Contacts (PrimaryKey, MemberID_A, MemberID_B, Verified) VALUES (DEFAULT, $1, $2, 0)
+            RETURNING MemberID_B, Verified`;
+        let values = [request.decoded.memberid, request.body.memberid];
 
-    pool.query(theQuery, values)
-            .then(result => { 
-
-                    const contacts = JSON.stringify(Object.assign({}, result.rows))
-                    req.incoming_requests = contacts
+        pool.query(query, values)
+            .then((result) => {
+                if (result.rowCount == 0) {
+                    response.status(200).send({
+                        message: 'Error inserting friend request!'
+                    })
+                } else {
+                    response.memberid_b = result.rows[0].memberid_b;
+                    response.verify = result.rows[0].verified;
                     next()
-                
+                }
             })
-            .catch((error) => {
-                console.log("contacts getting error")
-                console.log(error)
-            })
-  }, (req, res) => {
-    const theQuery = 'SELECT memberid,username,firstname,lastname,contacts.verified FROM contacts INNER JOIN Members ON contacts.memberid_b = members.memberid WHERE memberid_a=$1 AND verified=$2'
-    const values = [req.memberid,0]
+            .catch((err) => {
+                console.log('error adding: ' + err);
+                response.status(400).send({
+                    message: 'SQL Error: Insert failed',
+                });
+            });
+    }, (request, response) => {
+    // Send a notification of this chat addition to ALL members with registered tokens
+    let query = `SELECT DISTINCT token FROM Push_Token
+                INNER JOIN Contacts ON
+                Push_Token.memberid = Contacts.memberid_b
+                WHERE Contacts.memberid_b=$1`
+    let values = [request.body.memberid]
 
-    pool.query(theQuery, values)
-            .then(result => { 
+    pool.query(query, values)
+        .then((result) => {
+            if (result.rowCount==0) {
+                response.status(200).send({
+                    message: "No push token found, notification failed."
+                })
+            } else {
+                msg_functions.friendRequest(
+                    result.rows[0].token,
+                    request.decoded.memberid,
+                    response.nickname,
+                    response.firstname,
+                    response.lastname,
+                    response.email,
+                    response.verify
+                )
+                /*
+                result.rows.forEach((entry) =>
+                    msg_functions.friendRequest(
+                        entry.token,
+                        response.memberid_b,
+                        response.nickname,
+                        response.firstname,
+                        response.lastname,
+                        response.email,
+                        response.verify
+                        )
+                );
+                */
+                response.status(200).send({
+                    message: "Pushy requests sent",
+                    success:true
+                });
+            }
+        }).catch((err) => {
+            response.status(400).send({
+                message: 'SQL Error on select from push token',
+                error: err
+            });
+        });
+    }
+);
 
-                    const contacts = JSON.stringify(Object.assign({}, result.rows))
-                    req.outgoing_requests = contacts
-                    res.send('{"friends":' + req.contacts + ',"incoming_requests":' + req.incoming_requests + ',"outgoing_requests":' + req.outgoing_requests + '}')
-
-            })
-            .catch((error) => {
-                console.log("contacts geting error")
-                console.log(error)
-            })
-
-  })
-
-  /**
- * @api {post} contacts/request Request to send friend request
- * @apiName postRequest
- * @apiGroup Contacts
- * 
- * @apiHeader {String} authorization Valid JSON Web Token JWT
- * @apiParam {String} email email of user
- * 
- * @apiSuccess (200: Success) {JSON} memberid_a memberid of user, memberid_b memberid of friend, verified
- * 
- * @apiSuccessExample {json} Success-Response:
- *   HTTP/1.1 200 OK
- *  {
- *   "memberid_a": 1,
- *   "memberid_b": 2,
- *   "verified": 0
- * }
- * 
- * @apiError (400: Bad Request) {String} message "🚫Bad request!"
- * @apiErorr (404: Missing Parameters) {String} message "invalid input, error 22"
- * @apiError (409: Conflict) {String} message "request already exists"
- * 
- * 
- * @apiUse JSONError
- */ 
-router.post('/request', function(req, res, next) {
-    //get user info by email
-    const email = req.headers.email;
-
-    theQuery = 'SELECT memberid, username, firstname, lastname, email FROM MEMBERS WHERE email = $1'
-    const values = [email]
-
-    pool.query(theQuery, values)
-            .then(result => { 
-                if (result.rowCount == 0) {
-                    res.status(404).send('User is not found')
-                    return
-                } else {
-                        req.memberid_a = req.decoded.memberid
-                        req.memberid_b = result.rows[0].memberid
-                        req.username = result.rows[0].username
-                        req.firstname = result.rows[0].firstname
-                        req.lastname = result.rows[0].lastname
-                        req.email = result.rows[0].email
-                        req.user = result.rows
-                        console.log("found user")
-                        next();
-                }   
-                
-            })
-            .catch((error) => {
-                console.log("member lookup error")
-                console.log(error)
-            })
-}, (req,res,next) =>{
-    //check if request exists in db already
-    theQuery = 'SELECT memberid_a, memberid_b, verified FROM CONTACTS WHERE memberid_a = $1 AND memberid_b = $2'
-    const values = [req.memberid_a, req.memberid_b]
-
-    pool.query(theQuery, values)
-            .then(result => { 
-                if (result.rowCount == 0) {
-                    console.log("no duplicates")
-                    if (req.memberid_a == req.memberid_b) {
-                        res.status(408).send('You cannot send request to yourself!')
-                        return
-                    } else {
-                        next();
-                    }
-                    
-                } else {
-                        res.status(409).send('Friend request already exists')
-                        return
-                }   
-                
-            })
-            .catch((error) => {
-                console.log("member lookup error")
-                console.log(error)
-            })
-
-},
- (req, res) => {
-    //add request to db
-    let theQuery = "INSERT INTO CONTACTS(memberid_a, memberid_b, verified) VALUES ($1, $2, $3) RETURNING memberid_a, memberid_b, verified"
-    const values = [req.memberid_a,req.memberid_b, 0]
-
-    pool.query(theQuery, values)
-            .then(result => { 
-                if (result.rowCount == 0) {
-                    res.status(404).send('invalid input, error 22')
-                    return
-                } else {
-                        req.request = result.rows
-                        console.log("added friend request")
-                        res.status(200).send({
-                            success: true,
-                            memberid_a: req.memberid_a,
-                            memberid_b: req.memberid_b,
-                            verified: 0
-                        })
-                }   
-                
-            })
-            .catch((error) => {
-                console.log("contact insert error")
-                console.log(error)
-            })
-
-})
 
 module.exports = router
