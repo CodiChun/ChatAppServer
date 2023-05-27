@@ -157,6 +157,4 @@ router.post('/request', middleware.checkToken,
     }
     
 );
-
-
 module.exports = router
