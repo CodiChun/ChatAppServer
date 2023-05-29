@@ -19,16 +19,36 @@ function sendMessageToIndividual(token, message) {
     pushyAPI.sendPushNotification(data, token, {}, function (err, id) {
         // Log errors to console 
         if (err) {
-            return console.log('Fatal Error', err);
+            return console.log('Fatal message Error', err);
         }
 
         // Log success 
-        console.log('Push sent successfully! (ID: ' + id + ')')
+        console.log('Push message sent successfully! (ID: ' + id + ')')
     })
 }
 
 //add other "sendTypeToIndividual" functions here. Don't forget to export them
+function sendNewChatroomNotification(deviceTokens, chatRoomId) {
+    //build the data for Pushy to send
+    var data = {
+        "type": "newchatroom",
+        "chatRoomId": chatRoomId
+    }
+
+    // Use the "Send to Multiple Devices" API
+    // https://pushy.me/docs/api/send-notifications#multiple
+    pushyAPI.sendPushNotification(data, null, deviceTokens, {}, function(err, id) {
+        // Log errors to console
+        if (err) {
+            return console.log('New Chat Room Notification Error', err);
+        }
+
+        // Log success
+        console.log('Push new room sent successfully! (ID: ' + id + ')')
+    });
+}
 
 module.exports = {
-    sendMessageToIndividual
+    sendMessageToIndividual,
+    sendNewChatroomNotification
 }

@@ -6,7 +6,7 @@ const pool = require('../utilities/exports').pool
 
 const router = express.Router()
 
-const validation = require('../utilities/exports').validation
+const validation = require('../utilities').validation
 let isStringProvided = validation.isStringProvided
 
 /**
@@ -241,7 +241,7 @@ router.get("/:chatId", (request, response, next) => {
         })
     }, (request, response) => {
         //Retrieve the members
-        let query = `SELECT Members.Email 
+        let query = `SELECT Members.Email, members.username, members.memberid
                     FROM ChatMembers
                     INNER JOIN Members ON ChatMembers.MemberId=Members.MemberId
                     WHERE ChatId=$1`
@@ -378,7 +378,5 @@ router.delete("/:chatId/:email", (request, response, next) => {
         })
     }
 )
-
-
 
 module.exports = router

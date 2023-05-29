@@ -139,8 +139,8 @@ console.log(request.decoded)
                 next()
             }
         }).catch(error => {
-            response.status(400).send({
-                message: "SQL Error",
+            response.status(401).send({
+                message: "New Chat Room Notification Error",
                 error: error
             })
         })
@@ -165,26 +165,37 @@ console.log(request.decoded)
                 })
             })
 
-}, (request, response) => {
+}, async (request, response) => {
     //Insert the memberId into the chat
     let insert = `INSERT INTO ChatMembers(ChatId, MemberId)
     SELECT $1, unnest($2::integer[])
     RETURNING *`
 let values = [request.params.chatId, request.body.memberIds]
 
-    pool.query(insert, values)
-        .then(result => {
-            response.send({
-                success: true
-            })
-        }).catch(err => {
-            response.status(400).send({
-                message: "SQL Error",
-                error: err
-            })
-        })
-    }
-)
+try {
+    let result = await pool.query(insert, values);
+
+    // Fetch the deviceTokens of the members who need to be notified
+    let fetchTokensQuery = `SELECT token FROM push_token WHERE MemberId = ANY($1::integer[])`;
+    let fetchTokensValues = [request.body.memberIds];
+    let tokensResult = await pool.query(fetchTokensQuery, fetchTokensValues);
+
+    // Extract the device tokens from the query result
+    let deviceTokens = tokensResult.rows.map(row => row.token);
+
+    // Send the notification
+    await Pushy.sendNewChatroomNotification(deviceTokens, request.params.chatId);
+    
+    response.send({
+        success: true
+    });
+} catch (err) {
+    response.status(400).send({
+        message: "SQL Error",
+        error: err
+    });
+}
+});
 
 /**
  * @api {get} /chats/:chatId? Request to get the emails of user in a chat
