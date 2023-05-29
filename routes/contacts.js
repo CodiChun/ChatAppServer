@@ -1,15 +1,21 @@
+
+/**
+ * Backend routes for contacts
+ * @author Julia Kulev
+ */
+
 const { response } = require('express')
 const express = require('express')
 const { request } = require('express')
 const { CLIENT_MULTI_RESULT } = require('mysql/lib/protocol/constants/client.js')
 
-const pool = require('../utilities/exports').pool
+const pool = require('../utilities').pool
 
-const validation = require('../utilities/exports').validation
+const validation = require('../utilities').validation
 let isStringProvided = validation.isStringProvided
-const message_func = require('../utilities/exports').messaging
+const message_func = require('../utilities').messaging
 
-const middleware = require('../middleware/exports')
+const middleware = require('../middleware')
 const jwt = require('../middleware/jwt')
 
 
@@ -32,10 +38,10 @@ const router = express.Router()
  * @apiError (404: Missing Parameters) {String} message "Contacts not found"
  * @apiError (400: SQL Error) {String} message contacts getting error
  */ 
-router.get('/list/:memberId/:verified',
+router.get('/list',
     (request, response, next) => {
         //if no memberid is provided send an error
-        if (!request.params.memberId) {
+        if (request.params.memberid === null) {
             response.status(400).send({message: 'No memberid present',});
         } else {
             next();
@@ -44,17 +50,11 @@ router.get('/list/:memberId/:verified',
     (request, response, next) => {
         //make sure the memberid provided exists in the database
         let query = `SELECT * FROM Credentials WHERE MemberID=$1`;
-        let values = [request.params.memberId];
+        let values = [request.params.memberid];
 
         pool.query(query, values)
             .then((result) => {
-                if(result.rowCount > 0) {
-                    next();
-                } else {
-                    response.status(404).send({
-                        message: 'User not found',
-                    });
-                }
+                next();
             })
             .catch((error) => {
                 response.status(400).send({
@@ -65,20 +65,16 @@ router.get('/list/:memberId/:verified',
     },
     (request, response) => {
         // perform the Select*
-        let query = `SELECT Members.MemberId as id, Members.FirstName AS FirstName, Members.LastName AS LastName, Members.username AS Nickname, Members.Email AS Email
-        FROM Members
-        WHERE Members.MemberID IN (
-            SELECT MemberID_B FROM Contacts WHERE MemberID_A=$1 AND Verified=$2
-            UNION ALL
-            SELECT MemberID_A FROM Contacts WHERE MemberID_B=$1 AND Verified=$2
-        )
-        ORDER BY LastName ASC`;
-        let values = [request.params.memberId, request.params.verified];
+        let query = `SELECT Members.MemberId as id, Members.FirstName AS FirstName, Members.LastName AS LastName, Members.Nickname AS Nickname, Members.Email AS Email
+                        FROM Contacts LEFT JOIN Members ON Members.MemberID = Contacts.MemberID_A
+                        WHERE MemberID_B=$1 AND Contacts.verified = $2
+                        ORDER BY LastName ASC`;
+        let values = [request.params.memberid, request.params.verified];
 
         pool.query(query, values)
             .then((result) => {
                 response.send({
-                    userId: request.params.memberId,
+                    userId: request.params.memberid,
                     rowCount: result.rowCount,
                     rows: result.rows,
                 });

@@ -42,6 +42,7 @@ app.use('/chats', middleware.checkToken, require('./routes/chats.js'));
 app.use('/auth', middleware.checkToken, require('./routes/pushyregister.js'));
 app.use('/chatroom', middleware.checkToken, require('./routes/chatroom.js'));
 app.use('/member', middleware.checkToken, require('./routes/member.js'));
+app.use('/contacts', middleware.checkToken, require('./routes/contacts.js'));
 app.use('/contacts2', middleware.checkToken, require('./routes/contacts2.js'));
 app.use('/weather',middleware.checkToken,require('./routes/weather.js'))
 
