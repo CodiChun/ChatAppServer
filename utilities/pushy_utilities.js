@@ -19,11 +19,11 @@ function sendMessageToIndividual(token, message) {
     pushyAPI.sendPushNotification(data, token, {}, function (err, id) {
         // Log errors to console 
         if (err) {
-            return console.log('Fatal Error', err);
+            return console.log('Fatal message Error', err);
         }
 
         // Log success 
-        console.log('Push sent successfully! (ID: ' + id + ')')
+        console.log('Push message sent successfully! (ID: ' + id + ')')
     })
 }
 
@@ -44,7 +44,7 @@ function sendNewChatroomNotification(deviceTokens, chatRoomId) {
         }
 
         // Log success
-        console.log('Push sent successfully! (ID: ' + id + ')')
+        console.log('Push new room sent successfully! (ID: ' + id + ')')
     });
 }
 

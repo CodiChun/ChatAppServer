@@ -219,7 +219,7 @@ router.get("/:chatId?/:messageId?", (request, response, next) => {
         }
 
         let query = `SELECT Messages.PrimaryKey AS messageId, Members.Email, Messages.Message, 
-                    to_char(Messages.Timestamp AT TIME ZONE 'PDT', 'YYYY-MM-DD HH24:MI:SS.US' ) AS Timestamp
+                    to_char(Messages.Timestamp AT TIME ZONE 'PDT', 'YYYY-MM-DD HH24:MI' ) AS Timestamp
                     FROM Messages
                     INNER JOIN Members ON Messages.MemberId=Members.MemberId
                     WHERE ChatId=$1 AND Messages.PrimaryKey < $2
