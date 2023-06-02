@@ -118,6 +118,51 @@ router.post("/", (request, response, next) => {
     .catch(reason => response.status(400).send(reason.message));
 });
 
+router.post("/userlocations",(request,response) =>{
+    let query = `SELECT City FROM Locations WHERE MemberID=$1`
+    let values = [request.body.id]
+    //console.log(request.body.id)
+    pool.query(query, values)
+        .then(result => {
+            if (result.rowCount > 0) {
+                response.send({
+                    rowCount : result.rowCount,
+                    rows: result.rows
+                })
+            }
+        }).catch(error => {
+            response.status(401).send({
+                message: "SQL Error",
+                error: error
+            })
+            console.log(err)
+        })
+})
+
+router.post("/addlocation",(request,response,next) => {
+    if(isStringProvided(request.body.city)){
+        next()
+    }else{
+        response.status(401).send({
+            message: "Missing City"
+        })
+    }
+
+} ,(request,response)=> {
+    let query = `INSERT INTO Locations(MemberID,City) Values($1,$2)`
+    let values = [request.body.id,request.body.city]
+    pool.query(query,values).then(result => {
+        response.send({
+            success: true
+        })
+    }).catch(err => {
+        response.status(400).send({
+            message: "SQL Error",
+            error: err
+        })
+    })
+})
+
 
 module.exports = router
 
