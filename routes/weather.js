@@ -117,7 +117,26 @@ router.post("/", (request, response, next) => {
     .then(data => response.status(200).send(data))
     .catch(reason => response.status(400).send(reason.message));
 });
+/**
+ * @apiDefine JSONError
+ * @apiError (400: JSON Error) {String} message "malformed JSON in parameters"
+ */ 
 
+/**
+ * @api {Post} /weather/userlocations
+ * @apiName GetUserCities
+ * @apiGroup Weather
+ * 
+ * @apiHeader {String} authorization Valid JSON Web Token JWT
+ * @apiParam {String} must provide valid MemberId
+ * 
+ * 
+ * @apiError (400: Missing Parameters) {String} message "Bad MemberId"
+ * 
+ * 
+ * 
+ * @apiUse JSONError
+ */ 
 router.post("/userlocations",(request,response) =>{
     let query = `SELECT City FROM Locations WHERE MemberID=$1`
     let values = [request.body.id]
@@ -130,6 +149,11 @@ router.post("/userlocations",(request,response) =>{
                     rows: result.rows
                 })
             }
+            // else{
+            //     response.status(400).send({
+            //         message: "Bad memberId"
+            //     })
+            // }
         }).catch(error => {
             response.status(401).send({
                 message: "SQL Error",
@@ -138,7 +162,26 @@ router.post("/userlocations",(request,response) =>{
             console.log(err)
         })
 })
+/**
+ * @apiDefine JSONError
+ * @apiError (400: JSON Error) {String} message "malformed JSON in parameters"
+ */ 
 
+/**
+ * @api {post} /weather/addlocation 
+ * @apiName AddLocation
+ * @apiGroup Weather
+ * 
+ * @apiHeader {String} authorization Valid JSON Web Token JWT
+ * @apiParam {String} must provide city
+ * 
+ * 
+ * @apiError (400: Missing Parameters) {String} message "Missing required information in body"
+ * 
+ * 
+ * 
+ * @apiUse JSONError
+ */ 
 router.post("/addlocation",(request,response,next) => {
     if(isStringProvided(request.body.city)){
         next()
