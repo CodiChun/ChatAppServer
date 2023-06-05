@@ -34,7 +34,7 @@ const router = express.Router()
  * @apiParam {Number} memberid_a memberid of user
  * 
  */ 
-router.get('/list:memberId/:verified',
+router.get('/list/:memberId/:verified',
     (request, response, next) => {
         //if no memberid is provided send an error
         if (!request.params.memberId) {
@@ -46,7 +46,7 @@ router.get('/list:memberId/:verified',
     (request, response, next) => {
         //make sure the memberid provided exists in the database
         let query = `SELECT * FROM Credentials WHERE MemberID=$1`;
-        let values = [request.params.memberid];
+        let values = [request.params.memberId];
 
         pool.query(query, values)
             .then((result) => {
