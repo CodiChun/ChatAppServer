@@ -69,7 +69,7 @@ router.get('/list/:memberId/:verified',
     },
     (request, response) => {
         // perform the Select*
-        let query = `SELECT Members.MemberId as id, Members.FirstName AS FirstName, Members.LastName AS LastName, Members.Nickname AS Nickname, Members.Email AS Email
+        let query = `SELECT Members.MemberId as id, Members.FirstName AS FirstName, Members.LastName AS LastName, Members.Username AS Nickname, Members.Email AS Email
         FROM Contacts LEFT JOIN Members ON Members.MemberID = Contacts.MemberID_A
         WHERE MemberID_B=$1 AND Contacts.verified = $2
         ORDER BY LastName ASC`;
