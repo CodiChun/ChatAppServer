@@ -59,27 +59,27 @@ router.post("/", (request, response, next) => {
     let url
     
     if (forecast == "current" && city != "NA"){
-        url = "https://api.weatherbit.io/v2.0/current?city=" + city + "&units=I&key=3533b5d42baa4fa5b8dbdebd88798450"
+        url = "https://api.weatherbit.io/v2.0/current?city=" + city + "&units=I&key=26a4d86870a94761aecaea3f7a807cd3"
         request.url = url
         next();
     }else if (forecast == "daily" && city != "NA"){
-        url = "https://api.weatherbit.io/v2.0/forecast/daily?city=" + city + "&units=I&key=3533b5d42baa4fa5b8dbdebd88798450" 
+        url = "https://api.weatherbit.io/v2.0/forecast/daily?city=" + city + "&units=I&key=26a4d86870a94761aecaea3f7a807cd3" 
         request.url = url
         next();
     }else if (forecast == "hourly" && city != "NA"){
-        url = "https://api.weatherbit.io/v2.0/forecast/hourly?city=" + city + "&units=I&key=3533b5d42baa4fa5b8dbdebd88798450&hours=24"
+        url = "https://api.weatherbit.io/v2.0/forecast/hourly?city=" + city + "&units=I&key=26a4d86870a94761aecaea3f7a807cd3&hours=24"
         request.url = url
         next();
     }else if (forecast == "current" && zipcode != "NA"){
-        url = "https://api.weatherbit.io/v2.0/current?postal_code=" + zipcode + "&units=I&key=3533b5d42baa4fa5b8dbdebd88798450"
+        url = "https://api.weatherbit.io/v2.0/current?postal_code=" + zipcode + "&units=I&key=26a4d86870a94761aecaea3f7a807cd3"
         request.url = url
         next();
     }else if (forecast == "daily" && zipcode != "NA"){
-        url = "https://api.weatherbit.io/v2.0/forecast/daily?postal_code=" + zipcode + "&units=I&key=3533b5d42baa4fa5b8dbdebd88798450" 
+        url = "https://api.weatherbit.io/v2.0/forecast/daily?postal_code=" + zipcode + "&units=I&key=26a4d86870a94761aecaea3f7a807cd3" 
         request.url = url
         next();
     }else if (forecast == "hourly" && zipcode != "NA"){
-        url = "https://api.weatherbit.io/v2.0/forecast/hourly?postal_code=" + zipcode + "&units=I&key=3533b5d42baa4fa5b8dbdebd88798450&hours=24"
+        url = "https://api.weatherbit.io/v2.0/forecast/hourly?postal_code=" + zipcode + "&units=I&key=26a4d86870a94761aecaea3f7a807cd3&hours=24"
         request.url = url
         next();
     }else if (forecast == "current" && latlong != "NA"){
@@ -87,7 +87,7 @@ router.post("/", (request, response, next) => {
         //console.log(temp)
         let lat = temp[0]
         let lon = temp[1]
-        url = "https://api.weatherbit.io/v2.0/current?lat=" + lat + "&lon=" + lon +"&units=I&key=3533b5d42baa4fa5b8dbdebd88798450"
+        url = "https://api.weatherbit.io/v2.0/current?lat=" + lat + "&lon=" + lon +"&units=I&key=26a4d86870a94761aecaea3f7a807cd3"
         request.url = url
         next();
     }else if (forecast == "daily" && latlong != "NA"){
@@ -95,7 +95,7 @@ router.post("/", (request, response, next) => {
         //console.log(temp)
         let lat = temp[0]
         let lon = temp[1]
-        url = "https://api.weatherbit.io/v2.0/forecast/daily?lat=" + lat + "&lon=" + lon + "&units=I&key=3533b5d42baa4fa5b8dbdebd88798450"
+        url = "https://api.weatherbit.io/v2.0/forecast/daily?lat=" + lat + "&lon=" + lon + "&units=I&key=26a4d86870a94761aecaea3f7a807cd3"
         request.url = url
         next();
     }else if (forecast == "hourly" && latlong != "NA"){
@@ -103,7 +103,7 @@ router.post("/", (request, response, next) => {
         //console.log(temp)
         let lat = temp[0]
         let lon = temp[1]
-        url = "https://api.weatherbit.io/v2.0/forecast/hourly?lat=" + lat+ "&lon=" + lon + "&units=I&key=3533b5d42baa4fa5b8dbdebd88798450&hours=24"
+        url = "https://api.weatherbit.io/v2.0/forecast/hourly?lat=" + lat+ "&lon=" + lon + "&units=I&key=26a4d86870a94761aecaea3f7a807cd3"
         request.url = url
         next();
     }else{
